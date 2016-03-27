@@ -28,6 +28,7 @@ executable amqptap
                      , amqp
                      , bytestring
                      , readline
+                     , containers
                      , amqptap
   default-language:    Haskell2010
 

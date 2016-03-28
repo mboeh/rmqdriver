@@ -21,6 +21,14 @@ draining
 [messages print to stdout]
 ```
 
+## Commands
+
+* `add`: Create a named, temporary (exclusive) queue that will be destroyed when the connection is ended.
+* `bind QUEUE EXCHANGE ROUTINGKEY`: Bind the queue to the named exchange with the given routing key.
+* `unbind QUEUE EXCHANGE ROUTINGKEY`: Unbind the queue.
+* `list`: List created queues.
+* `drain QUEUE SINK`: Begin consuming messages from the queue in the background. Currently the only sink available, `default`, goes to stdout.
+
 ## Todo
 
 - [ ] `undrain`

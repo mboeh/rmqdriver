@@ -15,20 +15,33 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     AMQPTap
+  other-modules:       AMQPTap.Types
+                     , AMQPTap.Commands
+                     , AMQPTap.Sinks
+                     , AMQPTap.Engine
+  ghc-options:         -Wall
   build-depends:       base >= 4.7 && < 5
+                     , bytestring
                      , amqp
+                     , containers
+                     , text
   default-language:    Haskell2010
 
 executable amqptap
   hs-source-dirs:      app
   main-is:             Main.hs
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N -Wall
+  build-depends:       base
+                     , readline
+                     , amqptap
+  default-language:    Haskell2010
+
+executable amqptap-static
+  hs-source-dirs:      app
+  main-is:             Main.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N -Wall -optc-static -optl-static 
   build-depends:       base
-                     , text
-                     , amqp
-                     , bytestring
                      , readline
-                     , containers
                      , amqptap
   default-language:    Haskell2010
 

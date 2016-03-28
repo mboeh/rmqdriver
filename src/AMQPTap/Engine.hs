@@ -62,6 +62,11 @@ sourceUnbind engine queue exchange topic = do
   AM.unbindQueue (channel engine) (amQueueName queue) (amExchangeName exchange) (amTopicName topic)
   return (engine, OK "unbound")
 
+sourceDrain :: Engine -> Queue -> Sink -> IO (Engine, Status)
+sourceDrain engine queue (SinkHandler handler) = do
+  AM.consumeMsgs (channel engine) (amQueueName queue) AM.Ack handler
+  return (engine, OK "draining")
+
 handleAMError :: Engine -> AM.AMQPException -> IO (Engine, Status)
 handleAMError engine err = do
   AM.closeConnection $ connection engine
@@ -78,6 +83,7 @@ execCommand (EngineResult eng _ _) (Just command) = do
         doExec (SourceDrop q)       = sourceDrop eng q
         doExec (SourceBind q e t)   = sourceBind eng q e t
         doExec (SourceUnbind q e t) = sourceUnbind eng q e t
+        doExec (SourceDrain q s)    = sourceDrain eng q s
         doExec _                    = return (eng, Failure "not implemented")
 
 engineStartState :: Engine -> EngineResult

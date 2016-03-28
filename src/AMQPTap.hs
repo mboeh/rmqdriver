@@ -6,9 +6,7 @@ module AMQPTap ( connectEngine
                , EngineResult
                ) where
 
-import AMQPTap.Types
 import AMQPTap.Commands
 import AMQPTap.Engine
-import AMQPTap.Sinks
 
 engineStatus = status

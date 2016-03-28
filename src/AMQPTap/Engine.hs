@@ -64,7 +64,7 @@ sourceUnbind engine queue exchange topic = do
 
 sourceDrain :: Engine -> Queue -> Sink -> IO (Engine, Status)
 sourceDrain engine queue (SinkHandler handler) = do
-  AM.consumeMsgs (channel engine) (amQueueName queue) AM.Ack handler
+  _ <- AM.consumeMsgs (channel engine) (amQueueName queue) AM.Ack handler
   return (engine, OK "draining")
 
 handleAMError :: Engine -> AM.AMQPException -> IO (Engine, Status)

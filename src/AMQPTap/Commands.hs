@@ -1,4 +1,6 @@
-module AMQPTap.Commands where
+module AMQPTap.Commands ( Command(..)
+                        , parseCommand
+                        ) where
 
 import AMQPTap.Types
 import AMQPTap.Sinks
@@ -12,13 +14,22 @@ data Command = SourceAdd Queue
              | SourceDrain Queue Sink
              | NoCommand
 
+cmd :: [String] -> String
+cmd = intercalate " "
+
 instance Show Command where
-  show (SourceAdd (Queue queue)) = intercalate " " ["add", queue]
-  show (SourceList) = "list"
-  show (SourceDrop (Queue queue)) = intercalate " " ["drop", queue] 
-  show (SourceBind (Queue queue) (Exchange exchange) (Topic topic)) = intercalate " " ["bind", queue, exchange, topic]
-  show (SourceUnbind (Queue queue) (Exchange exchange) (Topic topic)) = intercalate " " ["unbind", queue, exchange, topic]
-  show (SourceDrain (Queue queue) sink) = intercalate " " ["drain", queue, show sink]
+  show (SourceAdd (Queue queue)) = 
+    cmd ["add", queue]
+  show (SourceList) = 
+    cmd ["list"]
+  show (SourceDrop (Queue queue)) = 
+    cmd ["drop", queue] 
+  show (SourceBind (Queue queue) (Exchange exchange) (Topic topic)) =
+    cmd ["bind", queue, exchange, topic]
+  show (SourceUnbind (Queue queue) (Exchange exchange) (Topic topic)) = 
+    cmd ["unbind", queue, exchange, topic]
+  show (SourceDrain (Queue queue) sink) = 
+    cmd ["drain", queue, show sink]
   show (NoCommand) = "pass"
 
 parseCommand :: [String] -> Maybe Command

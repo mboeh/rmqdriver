@@ -37,6 +37,6 @@ drained
 - [ ] drain to file: `drain foo file:foo.log`
 - [ ] message formatting
 - [ ] better interface
-- [ ] batch mode -- load a script or scripts on start, or only run a script
+- [x] batch mode -- load a script or scripts on start, or only run a script
 - [ ] `purge`
 - [ ] better output for `list`

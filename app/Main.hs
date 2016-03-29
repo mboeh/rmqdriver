@@ -1,9 +1,10 @@
 module Main where
 
 import AMQPTap
+import System.Environment (getArgs)
+import System.Exit (exitSuccess)
+import Control.Monad (liftM, foldM_)
 import qualified System.Console.Readline as RL
-
--- Basic entities to operate on
 
 -- Command interpreter
 
@@ -17,9 +18,21 @@ repl prompt state = do
                       newState <- execCommand state $ parseCommand $ words line
                       putStrLn $ show $ engineStatus newState
                       repl prompt newState 
-  where exit    = fail "Exiting."
+  where exit    = exitSuccess 
+
+execFile :: EngineResult -> String -> IO ()
+execFile state filename = do
+  commands <- (liftM $ (fmap parseCommand) . (fmap words) . lines) $ readFile filename
+  execCommands state commands
+  where execCommands _ []           = return ()
+        execCommands s (cmd : rest) = do newState <- execCommand s cmd
+                                         execCommands newState rest
 
 main :: IO ()
 main = do
   engine <- connectEngine "amqp://guest:guest@localhost"
-  repl "> " $ engineStartState engine
+  args <- getArgs
+  case args of
+    []         -> repl "> " $ engineStartState engine
+    [filename] -> execFile (engineStartState engine) filename
+    _          -> fail "bad arguments"

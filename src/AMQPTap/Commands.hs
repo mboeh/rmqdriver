@@ -12,6 +12,7 @@ data Command = SourceAdd Queue
              | SourceBind Queue Exchange Topic
              | SourceUnbind Queue Exchange Topic
              | SourceDrain Queue Sink
+             | SourceTail Queue Sink
              | NoCommand
 
 cmd :: [String] -> String
@@ -30,6 +31,8 @@ instance Show Command where
     cmd ["unbind", queue, exchange, topic]
   show (SourceDrain (Queue queue) sink) = 
     cmd ["drain", queue, show sink]
+  show (SourceTail (Queue queue) sink) = 
+    cmd ["tail", queue, show sink]
   show (NoCommand) = "pass"
 
 parseCommand :: [String] -> Maybe Command
@@ -45,4 +48,7 @@ parseCommand ["unbind", queue, exchange, topic] =
   Just $ SourceUnbind (Queue queue) (Exchange exchange) (Topic topic)
 parseCommand ["drain", queue, sink] =
   Just $ SourceDrain (Queue queue) (mkSink sink)
+parseCommand ["tail", queue, sink] =
+  Just $ SourceTail (Queue queue) (mkSink sink)
+
 parseCommand _ = Nothing

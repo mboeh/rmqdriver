@@ -6,6 +6,9 @@ import AMQPTap.Types
 import AMQPTap.Commands
 import Data.List (intercalate)
 import Control.Exception.Base (catch)
+import Control.Concurrent (threadDelay)
+import System.Posix.Signals (installHandler, Handler(CatchOnce, Default), sigINT, sigTERM)
+import Control.Concurrent.MVar (modifyMVar_, newMVar, withMVar, MVar)
 import qualified Data.Set as Set
 import qualified Data.Text as T
 import qualified Network.AMQP as AM
@@ -64,8 +67,38 @@ sourceUnbind engine queue exchange topic = do
 
 sourceDrain :: Engine -> Queue -> Sink -> IO (Engine, Status)
 sourceDrain engine queue (SinkHandler handler) = do
-  _ <- AM.consumeMsgs (channel engine) (amQueueName queue) AM.Ack handler
-  return (engine, OK "draining")
+  msgTuple <- AM.getMsg (channel engine) AM.NoAck (amQueueName queue)
+  case msgTuple of
+    Just (msg, env) -> do handler (msg, env)
+                          sourceDrain engine queue (SinkHandler handler)
+    Nothing         -> return (engine, OK "drained")
+
+sourceTail :: Engine -> Queue -> Sink -> IO (Engine, Status)
+sourceTail engine queue (SinkHandler handler) = do
+  intFlag <- newMVar 0
+  installSignalHandlers intFlag
+  go intFlag
+  where go :: MVar Int -> IO (Engine, Status)
+        go intFlag = do msgTuple <- AM.getMsg (channel engine) AM.NoAck (amQueueName queue)
+                        case msgTuple of
+                          Just (msg, env) -> handler (msg, env)
+                          Nothing         -> threadDelay 200
+                        tryInterrupt intFlag $ sourceTail engine queue (SinkHandler handler)
+        
+        handleInterrupt :: MVar Int -> IO ()
+        handleInterrupt intFlag       = modifyMVar_ intFlag (return . (+1))
+
+        installSignalHandlers :: MVar Int -> IO () 
+        installSignalHandlers intFlag = do _ <- installHandler sigINT (CatchOnce $ handleInterrupt intFlag) Nothing
+                                           _ <- installHandler sigTERM (CatchOnce $ handleInterrupt intFlag) Nothing
+                                           return ()
+
+        tryInterrupt :: MVar Int -> IO (Engine, Status) -> IO (Engine, Status)
+        tryInterrupt intFlag nextAct  = withMVar intFlag (testInterrupt nextAct)
+       
+        testInterrupt :: IO (Engine, Status) -> Int -> IO (Engine, Status)
+        testInterrupt nextAct 0 = nextAct
+        testInterrupt _       _ = return (engine, OK "interrupted")
 
 handleAMError :: Engine -> AM.AMQPException -> IO (Engine, Status)
 handleAMError engine err = do
@@ -84,6 +117,7 @@ execCommand (EngineResult eng _ _) (Just command) = do
         doExec (SourceBind q e t)   = sourceBind eng q e t
         doExec (SourceUnbind q e t) = sourceUnbind eng q e t
         doExec (SourceDrain q s)    = sourceDrain eng q s
+        doExec (SourceTail q s)     = sourceTail eng q s
         doExec _                    = return (eng, Failure "not implemented")
 
 engineStartState :: Engine -> EngineResult

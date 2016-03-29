@@ -17,8 +17,8 @@ unbound
 > list
 Queue "foo"
 > drain foo default
-draining
 [messages print to stdout]
+drained
 ```
 
 ## Commands
@@ -27,7 +27,8 @@ draining
 * `bind QUEUE EXCHANGE ROUTINGKEY`: Bind the queue to the named exchange with the given routing key.
 * `unbind QUEUE EXCHANGE ROUTINGKEY`: Unbind the queue.
 * `list`: List created queues.
-* `drain QUEUE SINK`: Begin consuming messages from the queue in the background. Currently the only sink available, `default`, goes to stdout.
+* `drain QUEUE SINK`: Consume all messages currently on QUEUE into SINK. Currently the only sink available, `default`, goes to stdout.
+* `tail QUEUE SINK`: Start consuming messages on QUEUE into SINK. Stops with Ctrl-C.
 
 ## Todo
 
@@ -37,6 +38,5 @@ draining
 - [ ] message formatting
 - [ ] better interface
 - [ ] batch mode -- load a script or scripts on start, or only run a script
-- [ ] foreground drain, `dump`
 - [ ] `purge`
 - [ ] better output for `list`

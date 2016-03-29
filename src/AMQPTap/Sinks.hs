@@ -1,6 +1,8 @@
 module AMQPTap.Sinks where
 
 import AMQPTap.Types
+import AMQPTap.JSON (messageWithEnvelope)
+import qualified Text.JSON as JSON
 import Text.Printf (printf)
 import qualified Network.AMQP as AM
 import qualified Data.ByteString.Lazy.Char8 as BL
@@ -8,6 +10,9 @@ import qualified Data.Text as T
 
 defaultSink :: Sink
 defaultSink = SinkHandler handler
+  where handler = putStrLn . JSON.encodeStrict . messageWithEnvelope
+
+textSink = SinkHandler handler
   where handler (msg, env) = 
           printf "[%s] %s\n" routingKey body
           where body       = BL.unpack $ AM.msgBody msg

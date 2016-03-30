@@ -4,6 +4,28 @@ Interactive tool for watching messages on RabbitMQ. Under development, partly as
 
 ## Usage
 
+Batch usage, with the `jq` JSON filter and pretty-printer:
+
+```
+% cat > batch.amqptap
+add foo
+bind foo amq.topic foo.bar
+bind foo amq.topic bar.baz
+tail foo json
+^D
+% amqptap batch.amqptap | jq .message
+{
+  "message": "foo"
+}
+{
+  "message": "bar"
+}
+^C
+%
+```
+
+Interactive usage:
+
 ```
 % amqptap
 > add foo

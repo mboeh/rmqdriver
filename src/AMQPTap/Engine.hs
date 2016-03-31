@@ -82,7 +82,7 @@ sourceTail engine queue (SinkHandler handler) = do
         go intFlag = do msgTuple <- AM.getMsg (channel engine) AM.NoAck (amQueueName queue)
                         case msgTuple of
                           Just (msg, env) -> handler (msg, env)
-                          Nothing         -> threadDelay 200
+                          Nothing         -> threadDelay 200000 -- 200ms
                         tryInterrupt intFlag $ sourceTail engine queue (SinkHandler handler)
         
         handleInterrupt :: MVar Int -> IO ()

@@ -24,6 +24,12 @@ tail foo json
 %
 ```
 
+Inline batch usage:
+
+```
+% amqptap -e "tap foo amq.topic foo.* json"
+```
+
 Interactive usage:
 
 ```
@@ -49,16 +55,14 @@ drained
 * `bind QUEUE EXCHANGE ROUTINGKEY`: Bind the queue to the named exchange with the given routing key.
 * `unbind QUEUE EXCHANGE ROUTINGKEY`: Unbind the queue.
 * `list`: List created queues.
-* `drain QUEUE SINK`: Consume all messages currently on QUEUE into SINK. Currently the only sink available, `default`, goes to stdout.
+* `drain QUEUE SINK`: Consume all messages currently on QUEUE into SINK. `text` and `json` sinks are available.
 * `tail QUEUE SINK`: Start consuming messages on QUEUE into SINK. Stops with Ctrl-C.
+* `tap QUEUE EXCHANGE ROUTINGKEY SINK`: `add`, `bind`, and `tail` combined.
 
 ## Todo
 
-- [ ] `undrain`
-- [ ] better-behaved background stdout drain
-- [ ] drain to file: `drain foo file:foo.log`
-- [ ] message formatting
-- [ ] better interface
+- [x] message formatting
+- [x] better interface (batch, command line)
 - [x] batch mode -- load a script or scripts on start, or only run a script
 - [ ] `purge`
 - [ ] better output for `list`

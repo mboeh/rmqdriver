@@ -7,8 +7,10 @@ import AMQPTap.Commands
 import Data.List (intercalate)
 import Control.Exception.Base (catch)
 import Control.Concurrent (threadDelay)
+import Control.Monad (replicateM, ap)
 import System.Posix.Signals (installHandler, Handler(CatchOnce), sigINT, sigTERM)
 import Control.Concurrent.MVar (modifyMVar_, newMVar, withMVar, MVar)
+import System.Random (randomRIO)
 import qualified Data.Set as Set
 import qualified Data.Text as T
 import qualified Network.AMQP as AM
@@ -18,8 +20,8 @@ data EngineResult = EngineResult { engine :: Engine
                                  , status :: Status
                                  }
 
-amQueueName :: Queue -> T.Text
-amQueueName (Queue name) = T.pack $ "amqptap-" ++ name
+amQueueName :: Engine -> Queue -> T.Text
+amQueueName engine (Queue name) = T.pack $ queuePrefix engine ++ name
 
 amExchangeName :: Exchange -> T.Text
 amExchangeName (Exchange name) = T.pack $ name
@@ -29,15 +31,16 @@ amTopicName (Topic name) = T.pack $ name
 
 connectEngine :: String -> IO Engine
 connectEngine amqpUri = do
-  connection <- AM.openConnection'' (AM.fromURI amqpUri)
-  channel    <- AM.openChannel connection
+  connection  <- AM.openConnection'' (AM.fromURI amqpUri)
+  channel     <- AM.openChannel connection
+  queuePrefix <- return (++) `ap` return "amqptap-" `ap` (replicateM 10 $ randomRIO ('a', 'z'))
   let queues = Set.empty
   return $ Engine{..}
 
 sourceAdd :: Engine -> Queue -> IO (Engine, Status)
 sourceAdd engine queue = do
   let engine'   = engine { queues = Set.insert queue $ queues engine }
-      queueOpts = AM.newQueue { AM.queueName       = amQueueName queue
+      queueOpts = AM.newQueue { AM.queueName       = amQueueName engine queue
                               , AM.queueAutoDelete = True
                               , AM.queueExclusive  = True 
                               }
@@ -52,22 +55,22 @@ sourceDrop :: Engine -> Queue -> IO (Engine, Status)
 sourceDrop engine queue = do
   let status  = if Set.member queue (queues engine) then OK "deleted" else Failure "no such queue"
       engine' = engine { queues = Set.delete queue $ queues engine }
-  _ <- AM.deleteQueue (channel engine) (amQueueName queue)
+  _ <- AM.deleteQueue (channel engine) (amQueueName engine queue)
   return (engine', status)
 
 sourceBind :: Engine -> Queue -> Exchange -> Topic -> IO (Engine, Status)
 sourceBind engine queue exchange topic = do
-  AM.bindQueue (channel engine) (amQueueName queue) (amExchangeName exchange) (amTopicName topic)
+  AM.bindQueue (channel engine) (amQueueName engine queue) (amExchangeName exchange) (amTopicName topic)
   return (engine, OK "bound")
 
 sourceUnbind :: Engine -> Queue -> Exchange -> Topic -> IO (Engine, Status)
 sourceUnbind engine queue exchange topic = do
-  AM.unbindQueue (channel engine) (amQueueName queue) (amExchangeName exchange) (amTopicName topic)
+  AM.unbindQueue (channel engine) (amQueueName engine queue) (amExchangeName exchange) (amTopicName topic)
   return (engine, OK "unbound")
 
 sourceDrain :: Engine -> Queue -> Sink -> IO (Engine, Status)
 sourceDrain engine queue (SinkHandler handler) = do
-  msgTuple <- AM.getMsg (channel engine) AM.NoAck (amQueueName queue)
+  msgTuple <- AM.getMsg (channel engine) AM.NoAck (amQueueName engine queue)
   case msgTuple of
     Just (msg, env) -> do handler (msg, env)
                           sourceDrain engine queue (SinkHandler handler)
@@ -79,7 +82,7 @@ sourceTail engine queue (SinkHandler handler) = do
   installSignalHandlers intFlag
   go intFlag
   where go :: MVar Int -> IO (Engine, Status)
-        go intFlag = do msgTuple <- AM.getMsg (channel engine) AM.NoAck (amQueueName queue)
+        go intFlag = do msgTuple <- AM.getMsg (channel engine) AM.NoAck (amQueueName engine queue)
                         case msgTuple of
                           Just (msg, env) -> handler (msg, env)
                           Nothing         -> threadDelay 200000 -- 200ms

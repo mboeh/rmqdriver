@@ -12,10 +12,11 @@ data Sink = SinkHandler ((AM.Message, AM.Envelope) -> IO ())
 instance Show Sink where
   show (SinkHandler _) = "default"
 
-data Engine = Engine { amqpUri    :: String
-                     , connection :: AM.Connection
-                     , channel    :: AM.Channel
-                     , queues     :: Set.Set Queue 
+data Engine = Engine { amqpUri     :: String
+                     , connection  :: AM.Connection
+                     , channel     :: AM.Channel
+                     , queuePrefix :: String
+                     , queues      :: Set.Set Queue 
                      }
 
 data Status = OK String

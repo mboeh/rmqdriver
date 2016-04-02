@@ -28,6 +28,7 @@ library
                      , text
                      , json
                      , unix
+                     , random
   default-language:    Haskell2010
 
 executable amqptap

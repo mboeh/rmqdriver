@@ -19,13 +19,13 @@ mkOptions :: Options
 mkOptions = Options "amqp://guest:guest@localhost" Interactive
 
 parseOptions :: [String] -> Options
-parseOptions = (flip go) mkOptions
-  where go ("-u" : uri : rest) opts      = go rest opts { amqpUri = uri }
-        go ("-e" : script : rest) opts   = go rest opts { mode = ExecuteScript script }
-        go ("-h" : rest) opts            = go rest opts { mode = Help }
-        go ("-b" : filename : rest) opts = go rest opts { mode = ExecuteFile filename }
-        go [] opts                       = opts
-        go _ opts                      = opts { mode = Help }
+parseOptions = go mkOptions
+  where go opts ("-u" : uri : rest)       = go opts { amqpUri = uri } rest
+        go opts ("-e" : script : rest)    = go opts { mode = ExecuteScript script } rest
+        go opts ("-h" : rest)             = go opts { mode = Help } rest
+        go opts ("-b" : filename : rest)  = go opts { mode = ExecuteFile filename } rest
+        go opts []                        = opts
+        go opts _                         = opts { mode = Help }
 
 -- Command interpreter
 

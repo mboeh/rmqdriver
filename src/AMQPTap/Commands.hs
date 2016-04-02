@@ -5,6 +5,7 @@ module AMQPTap.Commands ( Command(..)
 import AMQPTap.Types
 import AMQPTap.Sinks
 import Data.List (intercalate)
+import Data.Monoid
 
 data Command = SourceAdd Queue
              | SourceList
@@ -13,7 +14,12 @@ data Command = SourceAdd Queue
              | SourceUnbind Queue Exchange Topic
              | SourceDrain Queue Sink
              | SourceTail Queue Sink
+             | MultiCommand Command Command
              | NoCommand
+
+instance Monoid Command where
+  mempty = NoCommand
+  l `mappend` r = MultiCommand l r
 
 cmd :: [String] -> String
 cmd = intercalate " "
@@ -33,6 +39,7 @@ instance Show Command where
     cmd ["drain", queue, show sink]
   show (SourceTail (Queue queue) sink) = 
     cmd ["tail", queue, show sink]
+  show (MultiCommand l r) = show l ++ " ; " ++ show r
   show (NoCommand) = "pass"
 
 parseCommand :: [String] -> Maybe Command
@@ -50,5 +57,11 @@ parseCommand ["drain", queue, sink] =
   Just $ SourceDrain (Queue queue) (mkSink sink)
 parseCommand ["tail", queue, sink] =
   Just $ SourceTail (Queue queue) (mkSink sink)
+parseCommand ["tap", queue, exchange, topic, sink] =
+  let q   = Queue queue
+      ex  = Exchange exchange
+      top = Topic topic
+      sk  = mkSink sink
+  in Just $ SourceAdd q <> SourceBind q ex top <> SourceTail q sk 
 
 parseCommand _ = Nothing

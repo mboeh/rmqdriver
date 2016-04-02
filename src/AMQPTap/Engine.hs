@@ -7,7 +7,7 @@ import AMQPTap.Commands
 import Data.List (intercalate)
 import Control.Exception.Base (catch)
 import Control.Concurrent (threadDelay)
-import System.Posix.Signals (installHandler, Handler(CatchOnce, Default), sigINT, sigTERM)
+import System.Posix.Signals (installHandler, Handler(CatchOnce), sigINT, sigTERM)
 import Control.Concurrent.MVar (modifyMVar_, newMVar, withMVar, MVar)
 import qualified Data.Set as Set
 import qualified Data.Text as T
@@ -108,6 +108,8 @@ handleAMError engine err = do
 
 execCommand :: EngineResult -> Maybe Command -> IO EngineResult
 execCommand (EngineResult e c _) Nothing          = return $ EngineResult e c Unknown
+execCommand result (Just (MultiCommand l r)) =
+  execCommand result (Just l) >>= (flip execCommand) (Just r)
 execCommand (EngineResult eng _ _) (Just command) = do
   (engine, status) <- catch (doExec command) (handleAMError eng)
   return $ EngineResult{..}

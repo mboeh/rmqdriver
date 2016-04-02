@@ -6,20 +6,26 @@ import System.Exit (exitSuccess)
 import Data.List.Split (splitOneOf)
 import qualified System.Console.Readline as RL
 
-data Options = Options { amqpUri       :: String
-                       , executeFile   :: Maybe String
-                       , executeScript :: Maybe String
+data Mode = Interactive
+          | ExecuteFile String
+          | ExecuteScript String
+          | Help
+
+data Options = Options { amqpUri :: String
+                       , mode    :: Mode
                        }
 
 mkOptions :: Options
-mkOptions = Options "amqp://guest:guest@localhost" Nothing Nothing
+mkOptions = Options "amqp://guest:guest@localhost" Interactive
 
 parseOptions :: [String] -> Options
 parseOptions = (flip go) mkOptions
-  where go ("-u" : uri : rest) opts    = go rest opts { amqpUri = uri }
-        go ("-e" : script : rest) opts = go rest opts { executeScript = Just script }
-        go (filename : rest) opts      = go rest opts { executeFile = Just filename }
-        go _ opts                      = opts
+  where go ("-u" : uri : rest) opts      = go rest opts { amqpUri = uri }
+        go ("-e" : script : rest) opts   = go rest opts { mode = ExecuteScript script }
+        go ("-h" : rest) opts            = go rest opts { mode = Help }
+        go ("-b" : filename : rest) opts = go rest opts { mode = ExecuteFile filename }
+        go [] opts                       = opts
+        go _ opts                      = opts { mode = Help }
 
 -- Command interpreter
 
@@ -47,13 +53,20 @@ execFile :: EngineResult -> String -> IO ()
 execFile state "-" = getContents >>= execScript state
 execFile state filename = readFile filename >>= execScript state
 
+usage :: IO ()
+usage = do
+  putStrLn "Usage: amqptap [-b FILENAME|-e SCRIPT|-h]"
+  putStrLn "  -b FILENAME\tExecute contents of FILENAME as a script."
+  putStrLn "  -e SCRIPT  \tExecute the string SCRIPT."
+  putStrLn "  -h         \tRead this edifying help message."
+
 main :: IO ()
 main = do
   args <- getArgs
   let opts = parseOptions args
   engine <- connectEngine $ amqpUri opts 
-  case (executeFile opts, executeScript opts) of
-    (Nothing, Nothing) -> repl "> " $ engineStartState engine
-    (Just fn, Nothing) -> execFile (engineStartState engine) fn
-    (Nothing, Just sc) -> execScript (engineStartState engine) sc
-    _                  -> fail "Only one of -e or filename can be provided"
+  case mode opts of
+    Interactive      -> repl "> " $ engineStartState engine
+    ExecuteFile fn   -> execFile (engineStartState engine) fn
+    ExecuteScript sc -> execScript (engineStartState engine) sc
+    Help             -> usage

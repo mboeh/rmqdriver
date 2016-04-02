@@ -13,7 +13,7 @@ bind foo amq.topic foo.bar
 bind foo amq.topic bar.baz
 tail foo json
 ^D
-% amqptap batch.amqptap | jq .message
+% amqptap -b batch.amqptap | jq .message
 {
   "message": "foo"
 }

@@ -55,7 +55,9 @@ execFile state filename = readFile filename >>= execScript state
 
 usage :: IO ()
 usage = do
-  putStrLn "Usage: amqptap [-b FILENAME|-e SCRIPT|-h]"
+  putStrLn "Usage: amqptap [-u amqp://user:password@host] [-b FILENAME|-e SCRIPT|-h]"
+  putStrLn "  -u URI     \tConnect to the given RabbitMQ server."
+  putStrLn "             \tDefault is amqp://guest:guest@localhost" 
   putStrLn "  -b FILENAME\tExecute contents of FILENAME as a script."
   putStrLn "  -e SCRIPT  \tExecute the string SCRIPT."
   putStrLn "  -h         \tRead this edifying help message."

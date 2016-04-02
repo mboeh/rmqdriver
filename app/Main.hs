@@ -3,8 +3,20 @@ module Main where
 import AMQPTap
 import System.Environment (getArgs)
 import System.Exit (exitSuccess)
-import Control.Monad (liftM, foldM_)
 import qualified System.Console.Readline as RL
+
+data Options = Options { amqpUri :: String
+                       , executeFile :: Maybe String
+                       }
+
+mkOptions :: Options
+mkOptions = Options "amqp://guest:guest@localhost" Nothing
+
+parseOptions :: [String] -> Options
+parseOptions = (flip go) mkOptions
+  where go ("-u" : uri : rest) opts = go rest opts { amqpUri = uri }
+        go (filename : rest) opts   = go rest opts { executeFile = Just filename }
+        go _ opts                   = opts
 
 -- Command interpreter
 
@@ -20,19 +32,22 @@ repl prompt state = do
                       repl prompt newState 
   where exit    = exitSuccess 
 
-execFile :: EngineResult -> String -> IO ()
-execFile state filename = do
-  commands <- (liftM $ (fmap parseCommand) . (fmap words) . lines) $ readFile filename
+execScript :: EngineResult -> String -> IO ()
+execScript state text = do
+  let commands = (fmap parseCommand) . (fmap words) . lines $ text
   execCommands state commands
   where execCommands _ []           = return ()
         execCommands s (cmd : rest) = do newState <- execCommand s cmd
                                          execCommands newState rest
+  
+execFile :: EngineResult -> String -> IO ()
+execFile state filename = readFile filename >>= execScript state
 
 main :: IO ()
 main = do
-  engine <- connectEngine "amqp://guest:guest@localhost"
   args <- getArgs
-  case args of
-    []         -> repl "> " $ engineStartState engine
-    [filename] -> execFile (engineStartState engine) filename
-    _          -> fail "bad arguments"
+  let opts = parseOptions args
+  engine <- connectEngine $ amqpUri opts 
+  case executeFile opts of
+    Nothing       -> repl "> " $ engineStartState engine
+    Just filename -> execFile (engineStartState engine) filename

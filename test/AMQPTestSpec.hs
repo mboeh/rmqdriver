@@ -1,4 +1,4 @@
-module AMQPTapSpec (main, spec) where
+module RMQDriverSpec (main, spec) where
 
 import Test.Hspec
 

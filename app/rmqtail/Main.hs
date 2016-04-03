@@ -1,6 +1,6 @@
 module Main where
 
-import AMQPTap
+import RMQDriver
 import System.Environment (getArgs)
 import System.Exit (exitSuccess)
 import Data.List.Split (splitOneOf)
@@ -55,7 +55,7 @@ execFile state filename = readFile filename >>= execScript state
 
 usage :: IO ()
 usage = do
-  putStrLn "Usage: amqptap [-u amqp://user:password@host] [-b FILENAME|-e SCRIPT|-h]"
+  putStrLn "Usage: rmqtail [-u amqp://user:password@host] [-b FILENAME|-e SCRIPT|-h]"
   putStrLn "  -u URI     \tConnect to the given RabbitMQ server."
   putStrLn "             \tDefault is amqp://guest:guest@localhost" 
   putStrLn "  -b FILENAME\tExecute contents of FILENAME as a script."

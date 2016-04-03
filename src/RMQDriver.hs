@@ -1,4 +1,4 @@
-module AMQPTap ( connectEngine
+module RMQDriver ( connectEngine
                , engineStatus
                , engineStartState
                , execCommand
@@ -6,7 +6,7 @@ module AMQPTap ( connectEngine
                , EngineResult
                ) where
 
-import AMQPTap.Commands
-import AMQPTap.Engine
+import RMQDriver.Commands
+import RMQDriver.Engine
 
 engineStatus = status

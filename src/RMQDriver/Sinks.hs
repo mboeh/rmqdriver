@@ -1,7 +1,7 @@
-module AMQPTap.Sinks where
+module RMQDriver.Sinks where
 
-import AMQPTap.Types
-import AMQPTap.JSON (messageWithEnvelope)
+import RMQDriver.Types
+import RMQDriver.JSON (messageWithEnvelope)
 import qualified Text.JSON as JSON
 import Text.Printf (printf)
 import System.IO

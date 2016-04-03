@@ -1,4 +1,4 @@
-module AMQPTap.Types where
+module RMQDriver.Types where
 
 import qualified Network.AMQP as AM
 import qualified Data.Set as Set

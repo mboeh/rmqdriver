@@ -1,4 +1,4 @@
-module AMQPTap.JSON ( message
+module RMQDriver.JSON ( message
                     , envelope 
                     , messageWithEnvelope
                     ) where

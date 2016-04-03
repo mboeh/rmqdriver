@@ -1,9 +1,9 @@
-module AMQPTap.Commands ( Command(..)
+module RMQDriver.Commands ( Command(..)
                         , parseCommand
                         ) where
 
-import AMQPTap.Types
-import AMQPTap.Sinks
+import RMQDriver.Types
+import RMQDriver.Sinks
 import Data.List (intercalate)
 import Data.Monoid
 

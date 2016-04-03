@@ -1,9 +1,9 @@
 {-# LANGUAGE RecordWildCards, OverloadedStrings #-}
 
-module AMQPTap.Engine where
+module RMQDriver.Engine where
 
-import AMQPTap.Types
-import AMQPTap.Commands
+import RMQDriver.Types
+import RMQDriver.Commands
 import Data.List (intercalate)
 import Control.Exception.Base (catch)
 import Control.Concurrent (threadDelay)
@@ -33,7 +33,7 @@ connectEngine :: String -> IO Engine
 connectEngine amqpUri = do
   connection  <- AM.openConnection'' (AM.fromURI amqpUri)
   channel     <- AM.openChannel connection
-  queuePrefix <- return (++) `ap` return "amqptap-" `ap` (replicateM 10 $ randomRIO ('a', 'z'))
+  queuePrefix <- return (++) `ap` return "rmqdriver-" `ap` (replicateM 10 $ randomRIO ('a', 'z'))
   let queues = Set.empty
   return $ Engine{..}
 

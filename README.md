@@ -1,19 +1,21 @@
-# amqptap
+# rmqdriver
 
-Interactive tool for watching messages on RabbitMQ. Under development, partly as a learning project.
+Interactive tools for working with RabbitMQ. Under development, partly as a learning project.
+
+### rmqtail
 
 ## Usage
 
 Batch usage, with the `jq` JSON filter and pretty-printer:
 
 ```
-% cat > batch.amqptap
+% cat > batch.rmqtail
 add foo
 bind foo amq.topic foo.bar
 bind foo amq.topic bar.baz
 tail foo json
 ^D
-% amqptap -b batch.amqptap | jq .message
+% rmqtail -b batch.rmqtail | jq .message
 {
   "message": "foo"
 }
@@ -27,13 +29,13 @@ tail foo json
 Inline batch usage:
 
 ```
-% amqptap -e "tap foo amq.topic foo.* json"
+% rmqtail -e "tap foo amq.topic foo.* json"
 ```
 
-Interactive usage:
+Interactive usage (soon moving to rmqsh):
 
 ```
-% amqptap
+% rmqtail
 > add foo
 added
 > bind foo amq.topic foo.bar
@@ -61,6 +63,8 @@ drained
 
 ## Todo
 
+- [x] rename
+- [ ] rmqcat for publishing
 - [x] message formatting
 - [x] better interface (batch, command line)
 - [x] batch mode -- load a script or scripts on start, or only run a script
